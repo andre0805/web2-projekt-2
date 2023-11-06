@@ -44,8 +44,6 @@ app.get('/', async (req, res) => {
         if (req.oidc.isAuthenticated()) {
             const articles = await prisma.articles.findMany();
             res.render('index', { user: req.oidc.user, articles: articles });
-            
-            // console.log(JSON.stringify(articles, null, 2));
         } else {
             res.render('index', { user: null });
         }
@@ -86,7 +84,6 @@ app.get('/user/articles/:id', requiresAuth(), async (req, res) => {
                 return new ArticleComment(comment.id, comment.text, comment.articleId, comment.dateCommented, comment.author);
             });
         });
-        console.log(JSON.stringify(comments, null, 2));
 
         res.render('article', { user: req.oidc.user, article: article, datePublished: datePublished, comments: comments});
     } catch (error) {
@@ -98,8 +95,15 @@ app.get('/user/articles/:id', requiresAuth(), async (req, res) => {
 app.post('/articles/:id/comment', requiresAuth(), async (req, res) => {
     try {
         const id = req.params.id;
-        const comment = req.body.comment;
+        let comment = req.body.comment;
         const user = req.oidc.user;
+        const enableXssVulnerability = req.body.xssEnabled == "on" ? true : false;
+
+        // Prevent XSS attacks
+        if (!enableXssVulnerability) {
+            comment = replaceAllChars(comment, '<', '&lt;');
+            comment = replaceAllChars(comment, '>', '&gt;');
+        }
 
         const newComment = await prisma.comments.create({
             data: {
@@ -109,14 +113,18 @@ app.post('/articles/:id/comment', requiresAuth(), async (req, res) => {
             },
         });
 
-        console.log(new Date().toLocaleTimeString());
-
         res.redirect(`/user/articles/${id}`);
     } catch (error) {
         console.error('Error fetching data:', error);
         res.status(500).json({ error: error.message || error });
     }
 });
+
+function replaceAllChars(input: string, searchChar: string, replaceChar: string): string {
+    const regex = new RegExp(searchChar, 'g');
+    return input.replace(regex, replaceChar);
+}
+
 
 app.get("/signup", (req, res) => {
     res.oidc.login({

@@ -24,9 +24,15 @@ html
                 
                 h3 Comments (#{comments.length})
                 ul.comments
+                    // checkbox to enable/disable xss
                     form(action="/articles/"+article.id+"/comment", method="POST")
-                        input(type='text', id='comment', name='comment', placeholder='Write a comment...' required)
-                        button(type="submit") Post
+                        div.checkbox
+                            input(type="checkbox", id="xss", name="xssEnabled")
+                            label(for="xssEnabled") Enable XSS Vulnerability
+
+                        div.input
+                            input(type='text', id='comment', name='comment', placeholder='Write a comment...' required)
+                            button(type="submit") Post
 
                     each comment in comments
                         li.comment
