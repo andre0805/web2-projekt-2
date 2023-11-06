@@ -19,7 +19,7 @@ model comments {
   id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   articleId     String   @map("article_id") @db.Uuid
   text          String
-  dateCommented DateTime @map("date_commented") @db.Date
-  author        String[] @db.VarChar
+  dateCommented DateTime @default(now()) @map("date_commented") @db.Timestamptz(6)
+  author        String   @db.VarChar
   articles      articles @relation(fields: [articleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }

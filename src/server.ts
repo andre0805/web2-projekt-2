@@ -3,6 +3,7 @@ import { auth, requiresAuth } from 'express-openid-connect';
 import path from 'path';
 import dotenv from 'dotenv'
 import { PrismaClient } from '@prisma/client';
+import ArticleComment from './models/Comment';
 
 const host = process.env.HOST || 'localhost';
 const port = process.env.PORT || 3000;
@@ -44,7 +45,7 @@ app.get('/', async (req, res) => {
             const articles = await prisma.articles.findMany();
             res.render('index', { user: req.oidc.user, articles: articles });
             
-            console.log(JSON.stringify(articles, null, 2));
+            // console.log(JSON.stringify(articles, null, 2));
         } else {
             res.render('index', { user: null });
         }
@@ -58,12 +59,59 @@ app.get('/', async (req, res) => {
 app.get('/user/articles/:id', requiresAuth(), async (req, res) => {
     try {
         const id = req.params.id;
+        
         const article = await prisma.articles.findUnique({
             where: {
                 id: id
             }
         });
-        res.render('article', { article: article });
+
+        let datePublished: string;
+        if (article?.datePublished) {
+            datePublished = new Date(article.datePublished).toLocaleDateString('en', { year: 'numeric', month: 'long', day: 'numeric' });
+        } else {
+            datePublished = "N/A";
+        }
+
+        const comments: ArticleComment[] = await prisma.comments.findMany({
+            where: {
+                articleId: id
+            },
+            orderBy: {
+                dateCommented: 'desc'
+            }
+        })
+        .then(comments => {
+            return comments.map(comment => {
+                return new ArticleComment(comment.id, comment.text, comment.articleId, comment.dateCommented, comment.author);
+            });
+        });
+        console.log(JSON.stringify(comments, null, 2));
+
+        res.render('article', { user: req.oidc.user, article: article, datePublished: datePublished, comments: comments});
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        res.status(500).json({ error: error.message || error });
+    }
+});
+
+app.post('/articles/:id/comment', requiresAuth(), async (req, res) => {
+    try {
+        const id = req.params.id;
+        const comment = req.body.comment;
+        const user = req.oidc.user;
+
+        const newComment = await prisma.comments.create({
+            data: {
+                text: comment,
+                articleId: id,
+                author: user?.name || "Anonymous"
+            },
+        });
+
+        console.log(new Date().toLocaleTimeString());
+
+        res.redirect(`/user/articles/${id}`);
     } catch (error) {
         console.error('Error fetching data:', error);
         res.status(500).json({ error: error.message || error });

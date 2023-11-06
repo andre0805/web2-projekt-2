@@ -16,17 +16,16 @@ html
         
         if !user
             h2 Please login or signup to read articles!
-        
-        ul(class='navigation-menu')
-            if !user
+            
+            ul.navigation-menu
                 li: a(href='/login') Login
                 li: a(href='/signup') Signup
-        
-        h1 Available articles
-        if articles.length == 0
-            h2 No articles yet!
         else
-            ul
-                each article in articles
-                    li
-                        a.article(href="/articles/"+article.id) #{article.name}
+            div.articles
+                if !articles || articles.length == 0
+                    h2 No articles yet!
+                else
+                    ul
+                        each article in articles
+                            li
+                                a.article(href="/user/articles/"+article.id) #{article.title}

@@ -44,9 +44,11 @@ var express_openid_connect_1 = require("express-openid-connect");
 var path_1 = __importDefault(require("path"));
 var dotenv_1 = __importDefault(require("dotenv"));
 var client_1 = require("@prisma/client");
+var Comment_1 = __importDefault(require("./models/Comment"));
 var host = process.env.HOST || 'localhost';
 var port = process.env.PORT || 3000;
 var baseURL = host == 'localhost' ? "http://".concat(host, ":").concat(port) : "https://".concat(host);
+var adminID = process.env.ADMIN_ID;
 var app = (0, express_1.default)();
 var viewsPath = path_1.default.join(__dirname, 'views');
 app.set("views", viewsPath);
@@ -64,7 +66,7 @@ var config = {
     clientSecret: process.env.CLIENT_SECRET,
     authorizationParams: {
         response_type: 'code',
-        scope: 'openid profile email',
+        scope: 'openid profile email roles',
     },
 };
 var prisma = new client_1.PrismaClient();
@@ -72,20 +74,106 @@ var prisma = new client_1.PrismaClient();
 app.use((0, express_openid_connect_1.auth)(config));
 // req.isAuthenticated is provided from the auth router
 app.get('/', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var articles, error_1;
     return __generator(this, function (_a) {
-        try {
-            if (req.oidc.isAuthenticated()) {
-                res.render('index', { user: req.oidc.user });
-            }
-            else {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 4, , 5]);
+                if (!req.oidc.isAuthenticated()) return [3 /*break*/, 2];
+                return [4 /*yield*/, prisma.articles.findMany()];
+            case 1:
+                articles = _a.sent();
+                res.render('index', { user: req.oidc.user, articles: articles });
+                return [3 /*break*/, 3];
+            case 2:
                 res.render('index', { user: null });
-            }
+                _a.label = 3;
+            case 3: return [3 /*break*/, 5];
+            case 4:
+                error_1 = _a.sent();
+                console.error('Error fetching data:', error_1);
+                res.status(500).json({ error: error_1.message || error_1 });
+                return [3 /*break*/, 5];
+            case 5: return [2 /*return*/];
         }
-        catch (error) {
-            console.error('Error fetching data:', error);
-            res.status(500).json({ error: error.message || error });
+    });
+}); });
+app.get('/user/articles/:id', (0, express_openid_connect_1.requiresAuth)(), function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var id, article, datePublished, comments, error_2;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 3, , 4]);
+                id = req.params.id;
+                return [4 /*yield*/, prisma.articles.findUnique({
+                        where: {
+                            id: id
+                        }
+                    })];
+            case 1:
+                article = _a.sent();
+                datePublished = void 0;
+                if (article === null || article === void 0 ? void 0 : article.datePublished) {
+                    datePublished = new Date(article.datePublished).toLocaleDateString('en', { year: 'numeric', month: 'long', day: 'numeric' });
+                }
+                else {
+                    datePublished = "N/A";
+                }
+                return [4 /*yield*/, prisma.comments.findMany({
+                        where: {
+                            articleId: id
+                        },
+                        orderBy: {
+                            dateCommented: 'desc'
+                        }
+                    })
+                        .then(function (comments) {
+                        return comments.map(function (comment) {
+                            return new Comment_1.default(comment.id, comment.text, comment.articleId, comment.dateCommented, comment.author);
+                        });
+                    })];
+            case 2:
+                comments = _a.sent();
+                console.log(JSON.stringify(comments, null, 2));
+                res.render('article', { user: req.oidc.user, article: article, datePublished: datePublished, comments: comments });
+                return [3 /*break*/, 4];
+            case 3:
+                error_2 = _a.sent();
+                console.error('Error fetching data:', error_2);
+                res.status(500).json({ error: error_2.message || error_2 });
+                return [3 /*break*/, 4];
+            case 4: return [2 /*return*/];
         }
-        return [2 /*return*/];
+    });
+}); });
+app.post('/articles/:id/comment', (0, express_openid_connect_1.requiresAuth)(), function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var id, comment, user, newComment, error_3;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 2, , 3]);
+                id = req.params.id;
+                comment = req.body.comment;
+                user = req.oidc.user;
+                return [4 /*yield*/, prisma.comments.create({
+                        data: {
+                            text: comment,
+                            articleId: id,
+                            author: (user === null || user === void 0 ? void 0 : user.name) || "Anonymous"
+                        },
+                    })];
+            case 1:
+                newComment = _a.sent();
+                console.log(new Date().toLocaleTimeString());
+                res.redirect("/user/articles/".concat(id));
+                return [3 /*break*/, 3];
+            case 2:
+                error_3 = _a.sent();
+                console.error('Error fetching data:', error_3);
+                res.status(500).json({ error: error_3.message || error_3 });
+                return [3 /*break*/, 3];
+            case 3: return [2 /*return*/];
+        }
     });
 }); });
 app.get("/signup", function (req, res) {
