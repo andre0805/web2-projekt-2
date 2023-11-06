@@ -1,0 +1,25 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model articles {
+  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title         String     @db.VarChar(255)
+  description   String?
+  datePublished DateTime?  @map("date_published") @db.Date
+  comments      comments[]
+}
+
+model comments {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  articleId     String   @map("article_id") @db.Uuid
+  text          String
+  dateCommented DateTime @map("date_commented") @db.Date
+  author        String[] @db.VarChar
+  articles      articles @relation(fields: [articleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}

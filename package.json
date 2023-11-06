@@ -4,7 +4,7 @@
   "description": "",
   "main": "server.ts",
   "scripts": {
-    "build": "npm run clean && tsc && npm run copy-files && echo \"Build complete!\"",
+    "build": "npm run clean && tsc && npm run copy-files && prisma generate && echo \"Build complete!\"",
     "clean": "rm -rf dist",
     "copy-files": "mkdir -p dist/ && mkdir -p dist/views/ && cp -r src/views/ dist/views/ && cp -r src/styles/ dist/styles/",
     "dev": "open -u http://localhost:3000 && nodemon src/server.ts",
@@ -22,6 +22,7 @@
     "express-openid-connect": "^2.17.1",
     "path": "^0.12.7",
     "prisma": "^5.5.2",
+    "pug": "^3.0.2",
     "ts-node": "^10.9.1"
   },
   "devDependencies": {

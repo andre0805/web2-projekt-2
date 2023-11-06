@@ -1,0 +1,160 @@
+/* Reset some default styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+}
+
+/* Set a background color for the body */
+body {
+    background-color: #f0f0f0;
+    padding: 20px;
+}
+
+nav {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* Center the h1 */
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+/* Style for the h2 */
+h2 {
+    text-align: center;
+    color: #666;
+    margin: 20px 0;
+}
+
+div.user-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-end;
+}
+
+div.user-info p {
+    padding: 4px 0;
+}
+
+/* Style for the navigation menu */
+.navigation-menu {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.navigation-menu li {
+    margin: 0 10px;
+}
+
+/* Style for form elements */
+
+input[type="text"],
+textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    box-shadow: 2px 2px 5px #eee;
+    font-size: 14px
+}
+
+div.submit-button {
+    display: flex;
+    justify-content: center;
+}
+
+button[type="submit"] {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 40px;
+    cursor: pointer;
+    border-radius: 3px;
+    width: min-content;
+    margin-top: 10px;
+    font-weight: 600;
+    font-size: medium;
+}
+
+button[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
+/* Style for links */
+a {
+    text-decoration: none;
+    color: #007bff;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Style for the list of articles */
+ul {
+    list-style: none;
+    margin: 20px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+li {
+    width: 80%;
+    display: flex;
+    flex-direction: row;
+}
+
+li a {
+    margin: 8px 0;
+    padding: 10px 20px;
+
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 2px 2px 5px #eee;
+    font-size: 16px
+}
+
+li a:hover {
+    box-shadow: 2px 2px 5px #ddd;
+    background-color: #f0f0f0;
+}
+
+/* Style for the articles links */
+a {
+    text-decoration: none;
+    color: #007bff;
+}
+
+a.article {
+    flex-grow: 1;
+}
+
+@media (max-width: 768px) {
+    .competition-form {
+        background-color: #fff;
+        border-radius: 5px;
+        padding: 20px;
+        margin: 20px auto;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    li {
+        width: 100%;
+    }
+}
