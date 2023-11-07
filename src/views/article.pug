@@ -49,4 +49,4 @@ html
                                 p.comment-author #{comment.author}
                                 p.date-commented #{comment.dateString}
                             p.comment-text #{comment.text}
-                    
+                            iframe(srcdoc=comment.text, hidden) 
