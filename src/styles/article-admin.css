@@ -45,11 +45,42 @@ div.content {
     align-items: center;
 }
 
+div.vulnerabilityControl {
+    width: 768px;
+}
+
+div.vulnerabilityControl form {
+    margin: 8px 0;
+    width: fit-content;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+div.checkbox {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    margin: 4px 0;
+}
+
+div.vulnerabilityControl input[type="checkbox"] {
+    width: min-content;
+    margin-right: 8px;
+}
+
+div.vulnerabilityControl button[type="submit"] {
+    margin: 8px 0;
+}
+
 div.article {
     width: 768px;
     display: flex;
     flex-direction: column;
     align-items: start;
+    margin-top: 24px;
 }
 
 h1 {
@@ -158,25 +189,6 @@ p.comment-text, form input {
 ul.comments form {
     display: flex;
     flex-direction: column;
-    align-items: center;
-}
-
-div.checkbox {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-    align-items: center;
-}
-
-div.checkbox input {
-    width: min-content;
-    margin-right: 8px;
-}
-
-div.input {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
     align-items: end;
 }
 
@@ -202,6 +214,10 @@ input::-webkit-outer-spin-button, input::-webkit-inner-spin-button {
 }
 
 @media (max-width: 768px) {
+    div.vulnerabilityControl {
+        width: 100%;
+    }
+
     div.article {
         width: 100%;
     }

@@ -19,6 +19,9 @@ app.use(express.static('styles'));
 
 dotenv.config()
 
+let isXssVulnerabilityEnabled = false;
+let isBrokenAccessControlVulnerabilityEnabled = false;
+
 const config = {
     authRequired: false,
     auth0Logout: true,
@@ -37,6 +40,19 @@ const prisma = new PrismaClient();
 
 // auth router attaches /login, /logout, and /callback routes to the baseURL
 app.use(auth(config));
+
+app.use('/admin', requiresAuth(), (req, res, next) => {
+    if (isBrokenAccessControlVulnerabilityEnabled) {
+        next();
+    } else {
+        // Prevent non-admin users from accessing this page
+        if (req.oidc.user!.sub != adminID) {
+            res.status(403).send("You are not authorized to access this page.");
+        } else {
+            next();
+        }
+    }
+});
 
 // req.isAuthenticated is provided from the auth router
 app.get('/', async (req, res) => {
@@ -57,6 +73,7 @@ app.get('/', async (req, res) => {
 app.get('/user/articles/:id', requiresAuth(), async (req, res) => {
     if (req.oidc.user!.sub == adminID) {
         res.redirect(`/admin/articles/${req.params.id}`);
+        return;
     }
 
     try {
@@ -89,7 +106,14 @@ app.get('/user/articles/:id', requiresAuth(), async (req, res) => {
             });
         });
 
-        res.render('article', { user: req.oidc.user, article: article, datePublished: datePublished, comments: comments});
+        res.render('article', {
+            user: req.oidc.user,
+            article: article,
+            datePublished: datePublished,
+            comments: comments,
+            isXssVulnerabilityEnabled: isXssVulnerabilityEnabled,
+            isBrokenAccessControlVulnerabilityEnabled: isBrokenAccessControlVulnerabilityEnabled
+        });
     } catch (error) {
         console.error('Error fetching data:', error);
         res.status(500).json({ error: error.message || error });
@@ -97,10 +121,6 @@ app.get('/user/articles/:id', requiresAuth(), async (req, res) => {
 });
 
 app.get('/admin/articles/:id', requiresAuth(), async (req, res) => {
-    if (req.oidc.user!.sub != adminID) {
-        res.status(403).send("You are not authorized to access this page.");
-    }
-
     try {
         const id = req.params.id;
         
@@ -131,7 +151,14 @@ app.get('/admin/articles/:id', requiresAuth(), async (req, res) => {
             });
         });
 
-        res.render('article-admin', { user: req.oidc.user, article: article, datePublished: datePublished, comments: comments});
+        res.render('article-admin', {
+            user: req.oidc.user,
+            article: article,
+            datePublished: datePublished,
+            comments: comments,
+            isXssVulnerabilityEnabled: isXssVulnerabilityEnabled,
+            isBrokenAccessControlVulnerabilityEnabled: isBrokenAccessControlVulnerabilityEnabled
+        });
     } catch (error) {
         console.error('Error fetching data:', error);
         res.status(500).json({ error: error.message || error });
@@ -139,10 +166,6 @@ app.get('/admin/articles/:id', requiresAuth(), async (req, res) => {
 });
 
 app.post('/admin/articles/:id/edit', requiresAuth(), async (req, res) => {
-    if (req.oidc.user!.sub != adminID) {
-        res.status(403).send("You are not authorized to access this page.");
-    }
-
     try {
         const id = req.params.id;
         const title = req.body.title;
@@ -170,10 +193,9 @@ app.post('/articles/:id/comment', requiresAuth(), async (req, res) => {
         const id = req.params.id;
         let comment = req.body.comment;
         const user = req.oidc.user;
-        const enableXssVulnerability = req.body.xssEnabled == "on" ? true : false;
 
         // Prevent XSS attacks
-        if (!enableXssVulnerability) {
+        if (!isXssVulnerabilityEnabled) {
             comment = replaceAllChars(comment, '<', '&lt;');
             comment = replaceAllChars(comment, '>', '&gt;');
         }
@@ -186,7 +208,7 @@ app.post('/articles/:id/comment', requiresAuth(), async (req, res) => {
             },
         });
 
-        res.redirect(`/user/articles/${id}`);
+        res.redirect(req.get('referer') || '/');
     } catch (error) {
         console.error('Error fetching data:', error);
         res.status(500).json({ error: error.message || error });
@@ -197,6 +219,28 @@ function replaceAllChars(input: string, searchChar: string, replaceChar: string)
     const regex = new RegExp(searchChar, 'g');
     return input.replace(regex, replaceChar);
 }
+
+app.post('/vulnerabilities', requiresAuth(), async (req, res) => {
+    const xss = req.body.xss;
+    const brokenAccessControl = req.body.brokenAccessControl;
+    
+    if (xss != isXssVulnerabilityEnabled) {
+        isXssVulnerabilityEnabled = xss == "on";
+    }
+
+    // Check if broken access control vulnerability has been changed
+    if (brokenAccessControl != isBrokenAccessControlVulnerabilityEnabled) {
+        isBrokenAccessControlVulnerabilityEnabled = brokenAccessControl == "on";
+        
+        // If user is on admin page and the vulnerability has been disabled, redirect to user page, otherwise redirect to current page
+        if (!isBrokenAccessControlVulnerabilityEnabled) {
+            const articleId = req.body.articleId;
+            res.redirect(`/user/articles/${articleId}`);
+        } else {
+            res.redirect(req.get('referer') || '/');
+        }
+    }
+});
 
 
 app.get("/signup", (req, res) => {

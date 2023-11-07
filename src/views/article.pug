@@ -17,6 +17,20 @@ html
                     a(href="/login") Login
 
         div.content
+            div.vulnerabilityControl
+                h3 Vulnerability Control
+                form(action="/vulnerabilities", method="POST")
+                    div.checkbox
+                        input(type="checkbox", id="xss", name="xss", checked=isXssVulnerabilityEnabled)
+                        label(for="xss") Enable XSS Vulnerability
+                    div.checkbox
+                        input(type="checkbox", id="brokenAccessControl", name="brokenAccessControl", checked=isBrokenAccessControlVulnerabilityEnabled)
+                        label(for="brokenAccessControl") Enable Broken Access Control Vulnerability
+
+                    input(type="text", id="articleId", name="articleId", value=article.id, hidden)
+
+                    button(type="submit") Save
+            
             div.article
                 h1 #{article.title}
                 p.date-published #{datePublished}
@@ -26,13 +40,8 @@ html
                 ul.comments
                     // checkbox to enable/disable xss
                     form(action="/articles/"+article.id+"/comment", method="POST")
-                        div.checkbox
-                            input(type="checkbox", id="xss", name="xssEnabled")
-                            label(for="xssEnabled") Enable XSS Vulnerability
-
-                        div.input
-                            input(type='text', id='comment', name='comment', placeholder='Write a comment...' required)
-                            button(type="submit") Post
+                        input(type='text', id='comment', name='comment', placeholder='Write a comment...' required)
+                        button(type="submit") Post
 
                     each comment in comments
                         li.comment
