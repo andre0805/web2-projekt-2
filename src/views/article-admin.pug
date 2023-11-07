@@ -1,0 +1,46 @@
+html
+    head
+        title #{article.title}
+        meta(name='viewport', content='width=device-width, initial-scale=1')
+        style 
+            include ../styles/article-admin.css
+        
+    body
+        nav 
+            a(href="/") << Home
+            if user
+                div.user-info
+                    p #{user.name}
+                    a(href="/logout") Logout
+            else 
+                div.login
+                    a(href="/login") Login
+
+        div.content
+            div.article
+                div.edit
+                    form(action="/admin/articles/"+article.id+"/edit", method="POST")
+                        label(for="title") Title
+                        input(type='text', id='title', name='title', value=article.title, required)
+                        label(for="description") Description
+                        textarea(name="description", cols="30", rows="20", required) #{article.description}
+                        button(type="submit") Save
+                
+                h3 Comments (#{comments.length})
+                ul.comments
+                    form(action="/articles/"+article.id+"/comment", method="POST")
+                        div.checkbox
+                            input(type="checkbox", id="xss", name="xssEnabled")
+                            label(for="xssEnabled") Enable XSS Vulnerability
+
+                        div.input
+                            input(type='text', id='comment', name='comment', placeholder='Write a comment...' required)
+                            button(type="submit") Post
+
+                    each comment in comments
+                        li.comment
+                            div.top
+                                p.comment-author #{comment.author}
+                                p.date-commented #{comment.dateString}
+                            p.comment-text #{comment.text}
+                    

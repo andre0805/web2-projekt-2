@@ -55,6 +55,10 @@ app.get('/', async (req, res) => {
 });
 
 app.get('/user/articles/:id', requiresAuth(), async (req, res) => {
+    if (req.oidc.user!.sub == adminID) {
+        res.redirect(`/admin/articles/${req.params.id}`);
+    }
+
     try {
         const id = req.params.id;
         
@@ -86,6 +90,75 @@ app.get('/user/articles/:id', requiresAuth(), async (req, res) => {
         });
 
         res.render('article', { user: req.oidc.user, article: article, datePublished: datePublished, comments: comments});
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        res.status(500).json({ error: error.message || error });
+    }
+});
+
+app.get('/admin/articles/:id', requiresAuth(), async (req, res) => {
+    if (req.oidc.user!.sub != adminID) {
+        res.status(403).send("You are not authorized to access this page.");
+    }
+
+    try {
+        const id = req.params.id;
+        
+        const article = await prisma.articles.findUnique({
+            where: {
+                id: id
+            }
+        });
+
+        let datePublished: string;
+        if (article?.datePublished) {
+            datePublished = new Date(article.datePublished).toLocaleDateString('en', { year: 'numeric', month: 'long', day: 'numeric' });
+        } else {
+            datePublished = "N/A";
+        }
+
+        const comments: ArticleComment[] = await prisma.comments.findMany({
+            where: {
+                articleId: id
+            },
+            orderBy: {
+                dateCommented: 'desc'
+            }
+        })
+        .then(comments => {
+            return comments.map(comment => {
+                return new ArticleComment(comment.id, comment.text, comment.articleId, comment.dateCommented, comment.author);
+            });
+        });
+
+        res.render('article-admin', { user: req.oidc.user, article: article, datePublished: datePublished, comments: comments});
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        res.status(500).json({ error: error.message || error });
+    }
+});
+
+app.post('/admin/articles/:id/edit', requiresAuth(), async (req, res) => {
+    if (req.oidc.user!.sub != adminID) {
+        res.status(403).send("You are not authorized to access this page.");
+    }
+
+    try {
+        const id = req.params.id;
+        const title = req.body.title;
+        const description = req.body.description;
+
+        await prisma.articles.update({
+            where: {
+                id: id
+            },
+            data: {
+                title: title,
+                description: description
+            }
+        });
+
+        res.redirect(`/admin/articles/${id}`);
     } catch (error) {
         console.error('Error fetching data:', error);
         res.status(500).json({ error: error.message || error });
