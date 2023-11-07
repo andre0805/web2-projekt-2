@@ -32,7 +32,7 @@ const config = {
     clientSecret: process.env.CLIENT_SECRET,
     authorizationParams: {
         response_type: 'code',
-        scope: 'openid profile email roles',
+        scope: 'openid profile email',
     },
 };
 
