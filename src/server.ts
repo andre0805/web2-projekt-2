@@ -171,6 +171,11 @@ app.get('/user/articles/:id', requiresAuth(), async (req, res) => {
             }
         });
 
+        if (!article) {
+            res.sendStatus(404).send("Article not found");
+            return;
+        }
+
         const comments: Comment[] = await prisma.comments.findMany({
             where: {
                 articleId: id
@@ -212,10 +217,16 @@ app.get('/admin/articles/:id', requiresAuth(), async (req, res) => {
             if (article) {
                 return new Article(article.id, article.title, article.description, article.datePublished);
             } else {
+                res.sendStatus(404).send("Article not found");
                 return undefined;
             }
         });
 
+        if (!article) {
+            res.sendStatus(404).send("Article not found");
+            return;
+        }
+        
         const comments: Comment[] = await prisma.comments.findMany({
             where: {
                 articleId: id
