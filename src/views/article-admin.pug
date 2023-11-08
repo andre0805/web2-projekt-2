@@ -39,7 +39,9 @@ html
                         input(type='text', id='title', name='title', value=article.title, required)
                         label(for="description") Description
                         textarea(name="description", cols="30", rows="20", required) #{article.description}
-                        button(type="submit") Save
+                        div.save-delete
+                            button(type="submit") Save
+                            a.delete-article-button(href="/articles/"+article.id+"/delete") Delete
                 
                 h3 Comments (#{comments.length})
                 ul.comments

@@ -91,6 +91,22 @@ app.use('/articles/:id/edit', requiresAuth(), (req, res, next) => {
     }
 });
 
+app.use('/articles/:id/delete', requiresAuth(), (req, res, next) => {
+    const vulnerabilitySettings = getVulnerabilitySettings(req.oidc.user!.sub, sessionVulnerabilitySettings);
+
+    // If broken access control vulnerability is enabled, allow access to admin page
+    if (vulnerabilitySettings.isBrokenAccessControlVulnerabilityEnabled) {
+        next();
+    } else {
+        // Prevent non-admin users from accessing this page
+        if (req.oidc.user!.sub != adminID) {
+            res.status(403).send("You are not authorized to access this page.");
+        } else {
+            next();
+        }
+    }
+});
+
 app.use('/comments/:id/delete', requiresAuth(), (req, res, next) => {
     const vulnerabilitySettings = getVulnerabilitySettings(req.oidc.user!.sub, sessionVulnerabilitySettings);
 
@@ -245,6 +261,23 @@ app.post('/articles/:id/edit', requiresAuth(), async (req, res) => {
         });
 
         res.redirect(`/admin/articles/${id}`);
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        res.status(500).json({ error: error.message || error });
+    }
+});
+
+app.get('/articles/:id/delete', requiresAuth(), async (req, res) => {
+    try {
+        const id = req.params.id;
+
+        await prisma.articles.delete({
+            where: {
+                id: id
+            }
+        });
+
+        res.redirect('/');
     } catch (error) {
         console.error('Error fetching data:', error);
         res.status(500).json({ error: error.message || error });

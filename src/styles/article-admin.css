@@ -126,8 +126,33 @@ div.edit textarea {
     height: 200px;
 }
 
-div.edit button[type="submit"] {
-    margin: 10px auto;
+div.edit div.save-delete {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+div.edit button[type="submit"], a.delete-article-button {
+    margin: 12px 10px;
+    border: none;
+    cursor: pointer;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+div.edit a.delete-article-button {
+    background-color: #fff;
+    color: red;
+    border: 1px solid red;
+}
+
+div.edit a.delete-article-button:hover {
+    background-color: #faf0f0;
+    text-decoration: none;
 }
 
 /* Style for links */
@@ -149,7 +174,11 @@ ul.comments {
     align-items: left;
 }
 
-form input {
+ul.comments form {
+    margin-bottom: 12px;
+}
+
+ul.comments form input {
     width: 100%;
     margin: 8px 0;
     padding: 10px 16px;
@@ -226,7 +255,6 @@ a.delete-button {
     border-radius: 4px;
     box-shadow: 2px 2px 5px #eee;
     cursor: pointer;
-    
 }
 
 a.delete-button:hover {
@@ -241,7 +269,6 @@ button[type="submit"] {
     cursor: pointer;
     
     border-radius: 8px;
-    margin-bottom: 12px;
     padding: 8px 16px;
     font-weight: 600;
     font-size: 16px;
