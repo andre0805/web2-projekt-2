@@ -1,9 +1,12 @@
 import express from 'express';
 import { auth, requiresAuth } from 'express-openid-connect';
+import cookieParser from 'cookie-parser';
 import path from 'path';
 import dotenv from 'dotenv'
 import { PrismaClient } from '@prisma/client';
 import ArticleComment from './models/Comment';
+import VulnerabilitySettings from './models/VulnerabilitySettings';
+import { getVulnerabilitySettings, replaceAllChars } from './utils';
 
 const host = process.env.HOST || 'localhost';
 const port = process.env.PORT || 3000;
@@ -19,8 +22,7 @@ app.use(express.static('styles'));
 
 dotenv.config()
 
-let isXssVulnerabilityEnabled = false;
-let isBrokenAccessControlVulnerabilityEnabled = false;
+let sessionVulnerabilitySettings: { [userID: string]: VulnerabilitySettings } = {};
 
 const config = {
     authRequired: false,
@@ -41,8 +43,25 @@ const prisma = new PrismaClient();
 // auth router attaches /login, /logout, and /callback routes to the baseURL
 app.use(auth(config));
 
+// Parse cookies
+app.use(cookieParser());
+
+// Set vulnerability settings for session if user is authenticated
+app.use((req, res, next) => {
+    if (req.oidc.isAuthenticated()) {
+        const userID = req.oidc.user!.sub;
+        if (sessionVulnerabilitySettings[userID] == undefined) {
+            console.log("Creating new settings for session");
+            sessionVulnerabilitySettings[userID] = new VulnerabilitySettings(false, false);
+        }
+    }
+    next();
+});
+
 app.use('/admin', requiresAuth(), (req, res, next) => {
-    if (isBrokenAccessControlVulnerabilityEnabled) {
+    const vulnerabilitySettings = getVulnerabilitySettings(req.oidc.user!.sub, sessionVulnerabilitySettings);
+
+    if (vulnerabilitySettings.isBrokenAccessControlVulnerabilityEnabled) {
         next();
     } else {
         // Prevent non-admin users from accessing this page
@@ -106,13 +125,15 @@ app.get('/user/articles/:id', requiresAuth(), async (req, res) => {
             });
         });
 
+        const vulnerabilitySettings = getVulnerabilitySettings(req.oidc.user!.sub, sessionVulnerabilitySettings);
+
         res.render('article', {
             user: req.oidc.user,
             article: article,
             datePublished: datePublished,
             comments: comments,
-            isXssVulnerabilityEnabled: isXssVulnerabilityEnabled,
-            isBrokenAccessControlVulnerabilityEnabled: isBrokenAccessControlVulnerabilityEnabled
+            isXssVulnerabilityEnabled: vulnerabilitySettings.isXssVulnerabilityEnabled,
+            isBrokenAccessControlVulnerabilityEnabled: vulnerabilitySettings.isBrokenAccessControlVulnerabilityEnabled
         });
     } catch (error) {
         console.error('Error fetching data:', error);
@@ -151,13 +172,15 @@ app.get('/admin/articles/:id', requiresAuth(), async (req, res) => {
             });
         });
 
+        const vulnerabilitySettings = getVulnerabilitySettings(req.oidc.user!.sub, sessionVulnerabilitySettings);
+
         res.render('article-admin', {
             user: req.oidc.user,
             article: article,
             datePublished: datePublished,
             comments: comments,
-            isXssVulnerabilityEnabled: isXssVulnerabilityEnabled,
-            isBrokenAccessControlVulnerabilityEnabled: isBrokenAccessControlVulnerabilityEnabled
+            isXssVulnerabilityEnabled: vulnerabilitySettings.isXssVulnerabilityEnabled,
+            isBrokenAccessControlVulnerabilityEnabled: vulnerabilitySettings.isBrokenAccessControlVulnerabilityEnabled
         });
     } catch (error) {
         console.error('Error fetching data:', error);
@@ -192,10 +215,12 @@ app.post('/articles/:id/comment', requiresAuth(), async (req, res) => {
     try {
         const id = req.params.id;
         let comment = req.body.comment;
-        const user = req.oidc.user;
+        const user = req.oidc.user!;
+
+        const vulnerabilitySettings = getVulnerabilitySettings(user.sub, sessionVulnerabilitySettings);
 
         // Prevent XSS attacks
-        if (!isXssVulnerabilityEnabled) {
+        if (!vulnerabilitySettings.isXssVulnerabilityEnabled) {
             comment = replaceAllChars(comment, '<', '&lt;');
             comment = replaceAllChars(comment, '>', '&gt;');
         }
@@ -215,25 +240,24 @@ app.post('/articles/:id/comment', requiresAuth(), async (req, res) => {
     }
 });
 
-function replaceAllChars(input: string, searchChar: string, replaceChar: string): string {
-    const regex = new RegExp(searchChar, 'g');
-    return input.replace(regex, replaceChar);
-}
+
 
 app.post('/vulnerabilities', requiresAuth(), async (req, res) => {
     const xss = req.body.xss;
     const brokenAccessControl = req.body.brokenAccessControl;
     
-    if (xss != isXssVulnerabilityEnabled) {
-        isXssVulnerabilityEnabled = xss == "on";
+    const vulnerabilitySettings = getVulnerabilitySettings(req.oidc.user!.sub, sessionVulnerabilitySettings);
+
+    if (xss != vulnerabilitySettings.isXssVulnerabilityEnabled) {
+        vulnerabilitySettings.setXssVulnerabilityEnabled(xss == "on");
     }
 
     // Check if broken access control vulnerability has been changed
-    if (brokenAccessControl != isBrokenAccessControlVulnerabilityEnabled) {
-        isBrokenAccessControlVulnerabilityEnabled = brokenAccessControl == "on";
-        
+    if (brokenAccessControl != vulnerabilitySettings.isBrokenAccessControlVulnerabilityEnabled) {
+        vulnerabilitySettings.setBrokenAccessControlVulnerabilityEnabled(brokenAccessControl == "on");
+
         // If user is on admin page and the vulnerability has been disabled, redirect to user page, otherwise redirect to current page
-        if (!isBrokenAccessControlVulnerabilityEnabled) {
+        if (!vulnerabilitySettings.isBrokenAccessControlVulnerabilityEnabled) {
             const articleId = req.body.articleId;
             res.redirect(`/user/articles/${articleId}`);
         } else {
@@ -242,10 +266,10 @@ app.post('/vulnerabilities', requiresAuth(), async (req, res) => {
     }
 });
 
-
 app.get("/signup", (req, res) => {
+    console.log("Signing up");
     res.oidc.login({
-        returnTo: '/',
+        returnTo: req.get('referer') || '/',
         authorizationParams: {      
             screen_hint: "signup",
         },
