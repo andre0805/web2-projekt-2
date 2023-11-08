@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import path from 'path';
 import dotenv from 'dotenv'
 import { PrismaClient } from '@prisma/client';
+import Article from './models/Article';
 import ArticleComment from './models/Comment';
 import VulnerabilitySettings from './models/VulnerabilitySettings';
 import { getVulnerabilitySettings, replaceAllChars } from './utils';
@@ -77,7 +78,17 @@ app.use('/admin', requiresAuth(), (req, res, next) => {
 app.get('/', async (req, res) => {
     try {
         if (req.oidc.isAuthenticated()) {
-            const articles = await prisma.articles.findMany();
+            const articles: Article[] = await prisma.articles.findMany({
+                orderBy: {
+                    datePublished: 'desc'
+                }
+            })
+            .then(articles => {
+                return articles.map(article => {
+                    return new Article(article.id, article.title, article.description, article.datePublished);
+                });
+            });
+
             res.render('index', { user: req.oidc.user, articles: articles });
         } else {
             res.render('index', { user: null });
@@ -98,18 +109,18 @@ app.get('/user/articles/:id', requiresAuth(), async (req, res) => {
     try {
         const id = req.params.id;
         
-        const article = await prisma.articles.findUnique({
+        const article: Article | undefined = await prisma.articles.findUnique({
             where: {
                 id: id
             }
+        })
+        .then(article => {
+            if (article) {   
+                return new Article(article.id, article.title, article.description, article.datePublished);
+            } else {
+                return undefined;
+            }
         });
-
-        let datePublished: string;
-        if (article?.datePublished) {
-            datePublished = new Date(article.datePublished).toLocaleDateString('en', { year: 'numeric', month: 'long', day: 'numeric' });
-        } else {
-            datePublished = "N/A";
-        }
 
         const comments: ArticleComment[] = await prisma.comments.findMany({
             where: {
@@ -130,7 +141,6 @@ app.get('/user/articles/:id', requiresAuth(), async (req, res) => {
         res.render('article', {
             user: req.oidc.user,
             article: article,
-            datePublished: datePublished,
             comments: comments,
             isXssVulnerabilityEnabled: vulnerabilitySettings.isXssVulnerabilityEnabled,
             isBrokenAccessControlVulnerabilityEnabled: vulnerabilitySettings.isBrokenAccessControlVulnerabilityEnabled
@@ -145,18 +155,18 @@ app.get('/admin/articles/:id', requiresAuth(), async (req, res) => {
     try {
         const id = req.params.id;
         
-        const article = await prisma.articles.findUnique({
+        const article: Article | undefined = await prisma.articles.findUnique({
             where: {
                 id: id
             }
+        })
+        .then(article => {
+            if (article) {
+                return new Article(article.id, article.title, article.description, article.datePublished);
+            } else {
+                return undefined;
+            }
         });
-
-        let datePublished: string;
-        if (article?.datePublished) {
-            datePublished = new Date(article.datePublished).toLocaleDateString('en', { year: 'numeric', month: 'long', day: 'numeric' });
-        } else {
-            datePublished = "N/A";
-        }
 
         const comments: ArticleComment[] = await prisma.comments.findMany({
             where: {
@@ -177,7 +187,6 @@ app.get('/admin/articles/:id', requiresAuth(), async (req, res) => {
         res.render('article-admin', {
             user: req.oidc.user,
             article: article,
-            datePublished: datePublished,
             comments: comments,
             isXssVulnerabilityEnabled: vulnerabilitySettings.isXssVulnerabilityEnabled,
             isBrokenAccessControlVulnerabilityEnabled: vulnerabilitySettings.isBrokenAccessControlVulnerabilityEnabled
@@ -225,7 +234,7 @@ app.post('/articles/:id/comment', requiresAuth(), async (req, res) => {
             comment = replaceAllChars(comment, '>', '&gt;');
         }
 
-        const newComment = await prisma.comments.create({
+        await prisma.comments.create({
             data: {
                 text: comment,
                 articleId: id,
