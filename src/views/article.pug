@@ -21,10 +21,10 @@ html
                 h3 Vulnerability Control
                 form(action="/vulnerabilities", method="POST")
                     div.checkbox
-                        input(type="checkbox", id="xss", name="xss", checked=isXssVulnerabilityEnabled)
+                        input(type="checkbox", id="xss", name="xss", checked=vulnerabilitySettings.isXssVulnerabilityEnabled)
                         label(for="xss") Enable XSS Vulnerability
                     div.checkbox
-                        input(type="checkbox", id="brokenAccessControl", name="brokenAccessControl", checked=isBrokenAccessControlVulnerabilityEnabled)
+                        input(type="checkbox", id="brokenAccessControl", name="brokenAccessControl", checked=vulnerabilitySettings.isBrokenAccessControlVulnerabilityEnabled)
                         label(for="brokenAccessControl") Enable Broken Access Control Vulnerability
 
                     input(type="text", id="articleId", name="articleId", value=article.id, hidden)

@@ -62,6 +62,7 @@ app.use((req, res, next) => {
 app.use('/admin', requiresAuth(), (req, res, next) => {
     const vulnerabilitySettings = getVulnerabilitySettings(req.oidc.user!.sub, sessionVulnerabilitySettings);
 
+    // If broken access control vulnerability is enabled, allow access to admin page
     if (vulnerabilitySettings.isBrokenAccessControlVulnerabilityEnabled) {
         next();
     } else {
@@ -142,8 +143,7 @@ app.get('/user/articles/:id', requiresAuth(), async (req, res) => {
             user: req.oidc.user,
             article: article,
             comments: comments,
-            isXssVulnerabilityEnabled: vulnerabilitySettings.isXssVulnerabilityEnabled,
-            isBrokenAccessControlVulnerabilityEnabled: vulnerabilitySettings.isBrokenAccessControlVulnerabilityEnabled
+            vulnerabilitySettings: vulnerabilitySettings
         });
     } catch (error) {
         console.error('Error fetching data:', error);
@@ -188,8 +188,7 @@ app.get('/admin/articles/:id', requiresAuth(), async (req, res) => {
             user: req.oidc.user,
             article: article,
             comments: comments,
-            isXssVulnerabilityEnabled: vulnerabilitySettings.isXssVulnerabilityEnabled,
-            isBrokenAccessControlVulnerabilityEnabled: vulnerabilitySettings.isBrokenAccessControlVulnerabilityEnabled
+            vulnerabilitySettings: vulnerabilitySettings
         });
     } catch (error) {
         console.error('Error fetching data:', error);
@@ -276,7 +275,6 @@ app.post('/vulnerabilities', requiresAuth(), async (req, res) => {
 });
 
 app.get("/signup", (req, res) => {
-    console.log("Signing up");
     res.oidc.login({
         returnTo: req.get('referer') || '/',
         authorizationParams: {      
