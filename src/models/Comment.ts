@@ -1,4 +1,4 @@
-class ArticleComment {
+class Comment {
     id: string;
     text: string;
     articleId: string;
@@ -20,4 +20,4 @@ class ArticleComment {
     }
 }
 
-export default ArticleComment;
+export default Comment;

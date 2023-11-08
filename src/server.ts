@@ -5,7 +5,7 @@ import path from 'path';
 import dotenv from 'dotenv'
 import { PrismaClient } from '@prisma/client';
 import Article from './models/Article';
-import ArticleComment from './models/Comment';
+import Comment from './models/Comment';
 import VulnerabilitySettings from './models/VulnerabilitySettings';
 import { getVulnerabilitySettings, replaceAllChars } from './utils';
 
@@ -122,7 +122,7 @@ app.get('/user/articles/:id', requiresAuth(), async (req, res) => {
             }
         });
 
-        const comments: ArticleComment[] = await prisma.comments.findMany({
+        const comments: Comment[] = await prisma.comments.findMany({
             where: {
                 articleId: id
             },
@@ -132,7 +132,7 @@ app.get('/user/articles/:id', requiresAuth(), async (req, res) => {
         })
         .then(comments => {
             return comments.map(comment => {
-                return new ArticleComment(comment.id, comment.text, comment.articleId, comment.dateCommented, comment.author);
+                return new Comment(comment.id, comment.text, comment.articleId, comment.dateCommented, comment.author);
             });
         });
 
@@ -168,7 +168,7 @@ app.get('/admin/articles/:id', requiresAuth(), async (req, res) => {
             }
         });
 
-        const comments: ArticleComment[] = await prisma.comments.findMany({
+        const comments: Comment[] = await prisma.comments.findMany({
             where: {
                 articleId: id
             },
@@ -178,7 +178,7 @@ app.get('/admin/articles/:id', requiresAuth(), async (req, res) => {
         })
         .then(comments => {
             return comments.map(comment => {
-                return new ArticleComment(comment.id, comment.text, comment.articleId, comment.dateCommented, comment.author);
+                return new Comment(comment.id, comment.text, comment.articleId, comment.dateCommented, comment.author);
             });
         });
 
