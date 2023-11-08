@@ -149,7 +149,7 @@ ul.comments {
     align-items: left;
 }
 
-li.comment, form input {
+form input {
     width: 100%;
     margin: 8px 0;
     padding: 10px 16px;
@@ -161,7 +161,31 @@ li.comment, form input {
     font-size: 16px
 }
 
+li.comment {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+li.comment div.content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+
+    margin: 8px 0;
+    padding: 10px 16px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 2px 2px 5px #eee;
+    font-size: 16px
+}
+
 li.comment div.top {
+    width: 100%;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -190,6 +214,24 @@ ul.comments form {
     display: flex;
     flex-direction: column;
     align-items: end;
+}
+
+a.delete-button {
+    margin: 8px 10px;
+    padding: 10px 12px;    
+    font-size: 16px;
+    background-color: #fff;
+    color: red;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 2px 2px 5px #eee;
+    cursor: pointer;
+    
+}
+
+a.delete-button:hover {
+    box-shadow: 2px 2px 5px #ddd;
+    background-color: #f0f0f0;
 }
 
 button[type="submit"] {

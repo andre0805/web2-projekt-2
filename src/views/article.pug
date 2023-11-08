@@ -38,9 +38,9 @@ html
                 
                 h3 Comments (#{comments.length})
                 ul.comments
-                    // checkbox to enable/disable xss
-                    form(action="/articles/"+article.id+"/comment", method="POST")
+                    form(action="/comments", method="POST")
                         input(type='text', id='comment', name='comment', placeholder='Write a comment...' required)
+                        input(type="text", id="articleId", name="articleId", value=article.id, hidden)
                         button(type="submit") Post
 
                     each comment in comments

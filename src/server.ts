@@ -75,6 +75,22 @@ app.use('/admin', requiresAuth(), (req, res, next) => {
     }
 });
 
+app.use('/comments/:id/delete', requiresAuth(), (req, res, next) => {
+    const vulnerabilitySettings = getVulnerabilitySettings(req.oidc.user!.sub, sessionVulnerabilitySettings);
+
+    // If broken access control vulnerability is enabled, allow access to admin page
+    if (vulnerabilitySettings.isBrokenAccessControlVulnerabilityEnabled) {
+        next();
+    } else {
+        // Prevent non-admin users from accessing this page
+        if (req.oidc.user!.sub != adminID) {
+            res.status(403).send("You are not authorized to access this page.");
+        } else {
+            next();
+        }
+    }
+});
+
 // req.isAuthenticated is provided from the auth router
 app.get('/', async (req, res) => {
     try {
@@ -219,9 +235,9 @@ app.post('/admin/articles/:id/edit', requiresAuth(), async (req, res) => {
     }
 });
 
-app.post('/articles/:id/comment', requiresAuth(), async (req, res) => {
+app.post('/comments', requiresAuth(), async (req, res) => {
     try {
-        const id = req.params.id;
+        const articleId = req.body.articleId;
         let comment = req.body.comment;
         const user = req.oidc.user!;
 
@@ -236,7 +252,7 @@ app.post('/articles/:id/comment', requiresAuth(), async (req, res) => {
         await prisma.comments.create({
             data: {
                 text: comment,
-                articleId: id,
+                articleId: articleId,
                 author: user?.name || "Anonymous"
             },
         });
@@ -248,6 +264,22 @@ app.post('/articles/:id/comment', requiresAuth(), async (req, res) => {
     }
 });
 
+app.get('/comments/:id/delete', requiresAuth(), async (req, res) => {
+    try {
+        const id = req.params.id;
+
+        await prisma.comments.delete({
+            where: {
+                id: id
+            }
+        });
+
+        res.redirect(req.get('referer') || '/');
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        res.status(500).json({ error: error.message || error });
+    }
+});
 
 
 app.post('/vulnerabilities', requiresAuth(), async (req, res) => {

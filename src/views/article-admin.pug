@@ -4,6 +4,7 @@ html
         meta(name='viewport', content='width=device-width, initial-scale=1')
         style 
             include ../styles/article-admin.css
+        link(rel='stylesheet', href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css')
         
     body
         nav 
@@ -42,14 +43,18 @@ html
                 
                 h3 Comments (#{comments.length})
                 ul.comments
-                    form(action="/articles/"+article.id+"/comment", method="POST")
+                    form(action="/comments", method="POST")
                         input(type='text', id='comment', name='comment', placeholder='Write a comment...' required)
+                        input(type="text", id="articleId", name="articleId", value=article.id, hidden)
                         button(type="submit") Post
 
                     each comment in comments
                         li.comment
-                            div.top
-                                p.comment-author #{comment.author}
-                                p.date-commented #{comment.dateString}
-                            p.comment-text #{comment.text}
-                            iframe(srcdoc=comment.text, hidden)                    
+                            div.content
+                                div.top
+                                    p.comment-author #{comment.author}
+                                    p.date-commented #{comment.dateString}
+                                p.comment-text #{comment.text}
+                                iframe(srcdoc=comment.text, hidden)
+                            a.delete-button(href="/comments/"+comment.id+"/delete")
+                                i.fas.fa-trash
