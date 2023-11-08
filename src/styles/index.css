@@ -77,7 +77,12 @@ a:hover {
 }
 
 /* Style for the list of articles */
-div.articles ul {
+div.articles {
+    width: 768px;
+}
+
+ul.articles {
+    width: 100%;
     list-style: none;
     margin: 20px 0;
     display: flex;
@@ -85,15 +90,15 @@ div.articles ul {
     align-items: center;
 }
 
-div.articles li {
+li.article {
     width: 100%;
     display: flex;
     flex-direction: row;
-}
+    justify-content: space-between;
+    align-items: center;
 
-div.articles li a {
     margin: 8px 0;
-    padding: 10px 20px;
+    padding: 12px 20px;
 
     background-color: #fff;
     border: 1px solid #ccc;
@@ -102,13 +107,20 @@ div.articles li a {
     font-size: 16px
 }
 
-div.articles li a:hover {
+li.article:hover {
+    cursor: pointer;
     box-shadow: 2px 2px 5px #ddd;
     background-color: #f0f0f0;
 }
 
-div.articles a.article {
-    flex-grow: 1;
+li.article a {
+    text-decoration: none;
+}
+
+p.date-published {
+    font-size: 14px;
+    color: #999;
+    flex-shrink: 0;
 }
 
 @media (max-width: 768px) {

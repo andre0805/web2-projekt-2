@@ -25,7 +25,8 @@ html
                 if !articles || articles.length == 0
                     h2 No articles yet!
                 else
-                    ul
+                    ul.articles
                         each article in articles
-                            li
-                                a.article(href="/user/articles/"+article.id) #{article.title}
+                            li.article
+                                a(href="/user/articles/"+article.id) #{article.title}
+                                p.date-published #{article.dateString}
