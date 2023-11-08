@@ -34,7 +34,7 @@ html
 
             div.article
                 div.edit
-                    form(action="/admin/articles/"+article.id+"/edit", method="POST")
+                    form(action="/articles/"+article.id+"/edit", method="POST")
                         label(for="title") Title
                         input(type='text', id='title', name='title', value=article.title, required)
                         label(for="description") Description
